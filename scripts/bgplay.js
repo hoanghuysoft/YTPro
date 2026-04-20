@@ -18,7 +18,7 @@ this.artwork = data.artwork || [];
 
 
 
-if (!('mediaSession' in navigator)) {
+if (!(window.YTPRO_FEATURES && window.YTPRO_FEATURES.backgroundPlay === false) && !('mediaSession' in navigator)) {
 
 window.handlers = {};
 window.serviceRunning=false;
@@ -106,6 +106,7 @@ configurable: true
 
 async function bgPlay(info){
 
+if(window.YTPRO_FEATURES && window.YTPRO_FEATURES.backgroundPlay === false) return;
 
 if(!(window.location.href.indexOf("youtube.com/watch") > -1 || window.location.href.indexOf("youtube.com/shorts") > -1 )) return;
 

@@ -201,6 +201,11 @@ return url_components.toString();
 
 window.getDownloadStreams=async ()=>{
 
+if(window.YTPRO_FEATURES && window.YTPRO_FEATURES.downloads === false){
+var _dd=document.getElementById("downytprodiv");
+if(_dd) _dd.innerHTML="Downloads are not available in this build.";
+return;
+}
 
 write("Getting Deciphers...");
 

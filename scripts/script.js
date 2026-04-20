@@ -24,6 +24,17 @@ window.location.href=`javascript:(function () { var script = document.createElem
 }
 /**/
 
+/* Fork: set any key to false to hide that feature in the UI (logic stays in the bundle). Declared before the YTProVer guard so later scripts (e.g. bgplay.js) see flags even if this file short-circuits. */
+window.YTPRO_FEATURES = {
+downloads: false,
+heart: false,
+gestureVolumeBrightness: false,
+pip: false,
+autoUpdate: false,
+backgroundPlay: false
+};
+function ytproFeature(k){ return window.YTPRO_FEATURES[k] !== false; }
+
 if(!YTProVer){
 
 /*Few Stupid Inits*/
@@ -80,6 +91,8 @@ localStorage.setItem(x,"true");
 });
 
 }
+if(!ytproFeature("backgroundPlay")){ localStorage.setItem("bgplay","false"); try{ Android.setBgPlay(false); }catch(e){} }
+if(!ytproFeature("gestureVolumeBrightness")){ localStorage.setItem("gesC","false"); }
 if(localStorage.getItem("fzoom") == "true"){
 document.getElementsByName("viewport")[0].setAttribute("content","");
 }
@@ -695,28 +708,28 @@ ytpSetI.innerHTML+=`<br><b style='font-size:18px' >YT PRO Settings</b>
 <span style="font-size:10px">v${YTProVer}</span>
 <br><br>
 <div><input type="url" placeholder="Enter Youtube URL" onkeyup="searchUrl(this,event)"></div>
-<br>
+${ytproFeature("heart") ? `<br>
 <button onclick="window.location.hash='#hearts';">Liked Videos
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="${isD ? "#ccc" : "#444"}" viewBox="0 0 16 16">
 <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
 </svg>
-</button>
-<br>
+</button>` : ""}
+${ytproFeature("autoUpdate") ? `<br>
 <button onclick="checkUpdates();">Check for Updates
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="${isD ? "#ccc" : "#444"}"  viewBox="0 0 16 16">
 <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
 </svg>
-</button>
+</button>` : ""}
 <br>
 <div>Autoskip Sponsors <span onclick="sttCnf(this,'autoSpn');" style="${sttCnf(0,0,"autoSpn")}" ><b style="${sttCnf(0,1,"autoSpn")}"></b></span></div>
-<br>
-<div>Gesture Controls <span onclick="sttCnf(this,'gesC');" style="${sttCnf(0,0,"gesC")}" ><b style="${sttCnf(0,1,"gesC")}"></b></span></div>
+${ytproFeature("gestureVolumeBrightness") ? `<br>
+<div>Gesture Controls <span onclick="sttCnf(this,'gesC');" style="${sttCnf(0,0,"gesC")}" ><b style="${sttCnf(0,1,"gesC")}"></b></span></div>` : ""}
 <br>
 <div>Miniplayer Gesture <span onclick="sttCnf(this,'gesM');" style="${sttCnf(0,0,"gesM")}" ><b style="${sttCnf(0,1,"gesM")}"></b></span></div>
 <br>
 <div>Force Zoom <span onclick="sttCnf(this,'fzoom');" style="${sttCnf(0,0,"fzoom")}" ><b style="${sttCnf(0,1,"fzoom")}" ></b></span></div> 
-<br>
-<div>Background Play <span onclick="sttCnf(this,'bgplay');" style="${sttCnf(0,0,"bgplay")}" ><b style="${sttCnf(0,1,"bgplay")}" ></b></span></div> 
+${ytproFeature("backgroundPlay") ? `<br>
+<div>Background Play <span onclick="sttCnf(this,'bgplay');" style="${sttCnf(0,0,"bgplay")}" ><b style="${sttCnf(0,1,"bgplay")}" ></b></span></div>` : ""}
 <br>
 <div>Hide Shorts <span onclick="sttCnf(this,'shorts');" style="${sttCnf(0,0,"shorts")}" ><b style="${sttCnf(0,1,"shorts")}" ></b></span></div> 
 <br>
@@ -837,6 +850,7 @@ a.click();
 }
 
 function checkUpdates(){
+if(!ytproFeature("autoUpdate")) return;
 if(parseFloat(Android.getInfo()) < parseFloat(YTProVer) ){
 updateModel();
 }else{
@@ -937,6 +951,7 @@ return ` | ${s.toFixed(1)} ${ss[i]}`;
 
 /*Video Downloader*/
 async function ytproDownVid(){
+if(!ytproFeature("downloads")){ try{ history.back(); }catch(e){} return; }
 var ytproDown=document.createElement("div");
 var ytproDownDiv=document.createElement("div");
 ytproDownDiv.setAttribute("id","downytprodiv");
@@ -997,11 +1012,13 @@ x.style.display="none";
 
 /*Add the meme type and extensions lol*/
 function downCap(x,t){
+if(!ytproFeature("downloads")) return;
 Android.downvid(t,x,"plain/text");
 }
 
 /*Send to Download Manager*/
 function YTDownVid(o,ex){
+if(!ytproFeature("downloads")) return;
 var mtype="";
 if(ex ==".png"){
 mtype="image/png";
@@ -1522,7 +1539,7 @@ document.getElementById("diskl").innerHTML=dislikes;
 //Volume and brightness slider 
 try{
 
-if(localStorage.getItem("gesC") == "true"){
+if(localStorage.getItem("gesC") == "true" && ytproFeature("gestureVolumeBrightness")){
   
 
 var v= document.getElementById("player-container-id");
@@ -1761,7 +1778,7 @@ ytproGemini.addEventListener("click",
 async function(){
 
 
-if(parseFloat(Android.getInfo()) < parseFloat(YTProVer)){
+if(ytproFeature("autoUpdate") && parseFloat(Android.getInfo()) < parseFloat(YTProVer)){
 updateModel();
 
 return;
@@ -1782,6 +1799,7 @@ geminiInfo();
 
 
 
+if(ytproFeature("heart")){
 /*Heart Button*/
 var ytproFavElem=document.createElement("div");
 sty(ytproFavElem);
@@ -1792,9 +1810,9 @@ ytproFavElem.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" height="24" view
 }
 ytproMainDiv.appendChild(ytproFavElem);
 ytproFavElem.addEventListener("click",()=>{ytProHeart(ytproFavElem);});
+}
 
-
-
+if(ytproFeature("downloads")){
 /*Download Button*/
 var ytproDownVidElem=document.createElement("div");
 sty(ytproDownVidElem);
@@ -1805,7 +1823,9 @@ ytproDownVidElem.addEventListener("click",
 function(){
 window.location.hash="download";
 });
+}
 
+if(ytproFeature("pip")){
 /*PIP Button*/
 var ytproPIPVidElem=document.createElement("div");
 sty(ytproPIPVidElem);
@@ -1816,6 +1836,7 @@ ytproPIPVidElem.addEventListener("click",
 function(){
 PIPlayer(true);
 });
+}
 
 
 
@@ -1836,12 +1857,13 @@ if (b) b.remove();
 if (v) v.remove();
 
 
-if(document.getElementById("ytproMainSDivE") == null){
+if(document.getElementById("ytproMainSDivE") == null && (ytproFeature("downloads") || ytproFeature("heart"))){
 var ys=document.createElement("div");
 ys.setAttribute("id","ytproMainSDivE");
 ys.setAttribute("style",`width:50px;height:auto;position:relative;display:block;`);
 
 
+if(ytproFeature("downloads")){
 /*Download Button*/
 ysDown=document.createElement("div");
 ysDown.setAttribute("style",`
@@ -1855,8 +1877,9 @@ ysDown.addEventListener("click",
 function(){
 window.location.hash="download";
 });
+}
 
-
+if(ytproFeature("heart")){
 /*Heart Button*/
 ysHeart=document.createElement("div");
 ysHeart.setAttribute("style",`
@@ -1877,6 +1900,7 @@ ysHeart.addEventListener("click",
 function(){
 ytProHeart(ysHeart);
 });
+}
 
 
 
@@ -1887,8 +1911,8 @@ try{
   if(document.getElementsByClassName("reel-player-overlay-actions")[0].children[0]){
   
 document.getElementsByClassName("reel-player-overlay-actions")[0].insertBefore(ys,document.getElementsByClassName("reel-player-overlay-actions")[0].children[0]);
-ys.appendChild(ysDown);
-ys.appendChild(ysHeart);
+if(ytproFeature("downloads")) ys.appendChild(ysDown);
+if(ytproFeature("heart")) ys.appendChild(ysHeart);
 }
 }catch{}
 
@@ -2106,6 +2130,7 @@ var v=document.getElementsByClassName('video-stream')[0];
 
  
 if(pip){
+if(!ytproFeature("pip")) return;
 
 if(v.getBoundingClientRect().height > v.getBoundingClientRect().width){
 Android.pipvid("portrait");
@@ -2200,11 +2225,13 @@ try{document.getElementById("outerdownytprodiv").remove();}catch{}
 try{document.getElementById("outerheartsdiv").remove();}catch{}
 try{document.getElementById("settingsprodiv").remove();}catch{}
 if(window.location.hash == "#download"){
+if(!ytproFeature("downloads")){ try{ history.back(); }catch(e){} return; }
 ytproDownVid();
 }else if(window.location.hash == "#settings"){
 ytproSettings();
 }
 else if(window.location.hash == "#hearts"){
+if(!ytproFeature("heart")){ try{ history.back(); }catch(e){} return; }
 showHearts();
 }
 
@@ -2517,6 +2544,7 @@ observer.observe(targetNode, config);
 
 /*Update your app bruh*/
 function updateModel(){
+if(!ytproFeature("autoUpdate")) return;
 var x=document.createElement("div");
 
 x.setAttribute("style",`height:100%;width:100%;position:fixed;display:grid;align-items:center;top:0;left:0;background:rgba(0,0,0,.6);z-index:99999;`);
@@ -2551,7 +2579,7 @@ document.body.appendChild(x);
 
 
 window.onload = function(){ 
-if(parseFloat(Android.getInfo()) < parseFloat(YTProVer) && (window.location.href == "https://m.youtube.com/" || window.location.href == "https://m.youtube.com") ){
+if(ytproFeature("autoUpdate") && parseFloat(Android.getInfo()) < parseFloat(YTProVer) && (window.location.href == "https://m.youtube.com/" || window.location.href == "https://m.youtube.com") ){
 updateModel();
 }
 
