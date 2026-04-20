@@ -24,15 +24,15 @@ window.location.href=`javascript:(function () { var script = document.createElem
 }
 /**/
 
-/* Fork: set any key to false to hide that feature in the UI (logic stays in the bundle). Declared before the YTProVer guard so later scripts (e.g. bgplay.js) see flags even if this file short-circuits. */
-window.YTPRO_FEATURES = {
+/* Fork: set any key to false to hide that feature in the UI (logic stays in the bundle). MainActivity may inject window.YTPRO_FEATURES before this file — later keys win. */
+window.YTPRO_FEATURES = Object.assign({}, {
 downloads: false,
 heart: false,
 gestureVolumeBrightness: false,
 pip: false,
 autoUpdate: false,
 backgroundPlay: false
-};
+}, window.YTPRO_FEATURES || {});
 function ytproFeature(k){ return window.YTPRO_FEATURES[k] !== false; }
 
 if(!YTProVer){
@@ -64,10 +64,10 @@ let touchstartY = 0;
 let touchendY = 0;
 let initialDistance=null;
 
-//swipe controls
+//swipe controls (vol/brt only used when gesture volume+brightness sliders are enabled)
 var sens=0.005;
-var vol=Android.getVolume();
-var brt = Android.getBrightness()/100;
+var vol= ytproFeature("gestureVolumeBrightness") ? Android.getVolume() : 0;
+var brt= ytproFeature("gestureVolumeBrightness") ? Android.getBrightness()/100 : 0;
 
 if(localStorage.getItem("saveCInfo") == null  || localStorage.getItem("gesC") == null || localStorage.getItem("gesM") == null || localStorage.getItem("bgplay") == null){
 localStorage.setItem("autoSpn","true");
@@ -913,10 +913,14 @@ document.getElementsByName("viewport")[0].setAttribute("content","");
 
 
 
+if(ytproFeature("backgroundPlay")){
 if(localStorage.getItem("bgplay") == "true"){
 Android.setBgPlay(true);
 }else{
 Android.setBgPlay(false);
+}
+}else{
+try{ Android.setBgPlay(false); }catch(e){}
 }
 
 
@@ -1505,11 +1509,6 @@ handleGeminiResponse(response);
 
 }
 
-
-var volSvg=`<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" focusable="false" aria-hidden="true" style="pointer-events: none;filter:drop-shadow(0px 0px 1px black);position:absolute;top:10%"><path fill="#fff" d="M11.485 2.143 3.913 6.687A6 6 0 001 11.832v.338a6 6 0 002.913 5.144l7.572 4.543A1 1 0 0013 21V3a1.001 1.001 0 00-1.515-.857Zm6.88 2.079a1 1 0 00-.001 1.414 9 9 0 010 12.728 1 1 0 001.414 1.414 11 11 0 000-15.556 1 1 0 00-1.413 0Zm-2.83 2.828a1 1 0 000 1.415 5 5 0 010 7.07 1 1 0 001.415 1.415 6.999 6.999 0 000-9.9 1 1 0 00-1.415 0Z"></path></svg>`;
-var brtSvg=`<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="16" viewBox="0 0 24 24" width="16" style="filter:drop-shadow(0px 0px 1px black);position:absolute;top:10%;"><rect fill="none" height="24" width="24"/><path fill="#fff" d="M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0 c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2 c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1 C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06 c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41 l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41 c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36 c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"/></svg>`;
-
-
 /*THE 0NE AND 0NLY FUNCTION*/
 async function pkc(){
 
@@ -1536,11 +1535,13 @@ document.getElementById("diskl").innerHTML=dislikes;
 }catch(e){}
 
 
-//Volume and brightness slider 
+//Volume and brightness slider (hidden when YTPRO_FEATURES.gestureVolumeBrightness is false or gesC is off)
 try{
 
 if(localStorage.getItem("gesC") == "true" && ytproFeature("gestureVolumeBrightness")){
-  
+
+var volSvg=`<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" focusable="false" aria-hidden="true" style="pointer-events: none;filter:drop-shadow(0px 0px 1px black);position:absolute;top:10%"><path fill="#fff" d="M11.485 2.143 3.913 6.687A6 6 0 001 11.832v.338a6 6 0 002.913 5.144l7.572 4.543A1 1 0 0013 21V3a1.001 1.001 0 00-1.515-.857Zm6.88 2.079a1 1 0 00-.001 1.414 9 9 0 010 12.728 1 1 0 001.414 1.414 11 11 0 000-15.556 1 1 0 00-1.413 0Zm-2.83 2.828a1 1 0 000 1.415 5 5 0 010 7.07 1 1 0 001.415 1.415 6.999 6.999 0 000-9.9 1 1 0 00-1.415 0Z"></path></svg>`;
+var brtSvg=`<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="16" viewBox="0 0 24 24" width="16" style="filter:drop-shadow(0px 0px 1px black);position:absolute;top:10%;"><rect fill="none" height="24" width="24"/><path fill="#fff" d="M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0 c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2 c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1 C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06 c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41 l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41 c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36 c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"/></svg>`;
 
 var v= document.getElementById("player-container-id");
 var rect=v.getBoundingClientRect();
@@ -1851,10 +1852,12 @@ PIPlayer(true);
 }else if(window.location.href.indexOf("youtube.com/shorts") > -1){
 
 
+if(ytproFeature("gestureVolumeBrightness")){
 let b = document.getElementById("brtS");
 let v = document.getElementById("volS");
 if (b) b.remove();
 if (v) v.remove();
+}
 
 
 if(document.getElementById("ytproMainSDivE") == null && (ytproFeature("downloads") || ytproFeature("heart"))){
@@ -2389,9 +2392,11 @@ return origSend.apply(this, arguments);
 function adsBlock(){
 
 
+if(ytproFeature("pip")){
 try{
 document.getElementsByClassName('video-stream')[0].removeAttribute('disablepictureinpicture');
 }catch{}
+}
 
 
 /*Block Ads*/

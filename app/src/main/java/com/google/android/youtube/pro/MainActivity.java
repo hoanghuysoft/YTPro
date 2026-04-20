@@ -42,6 +42,10 @@ public class MainActivity extends Activity {
   private boolean isPip = false;
   private boolean dL = false;
 
+  /** Sync with scripts/script.js YTPRO_FEATURES: JS hides UI, these enforce native PIP / bg playback. */
+  static final boolean YTPRO_FEATURE_PIP = false;
+  static final boolean YTPRO_FEATURE_BACKGROUND_PLAY = false;
+
   private YTProWebview web;
   private OnBackInvokedCallback backCallback;
 
@@ -52,10 +56,7 @@ public class MainActivity extends Activity {
     
 
     SharedPreferences prefs = getSharedPreferences("YTPRO", MODE_PRIVATE);
-
-    if (!prefs.contains("bgplay")) {
-      prefs.edit().putBoolean("bgplay", true).apply();
-    }
+    prefs.edit().putBoolean("bgplay", YTPRO_FEATURE_BACKGROUND_PLAY).apply();
 
     load(false);
 
@@ -192,8 +193,11 @@ public class MainActivity extends Activity {
       public void onPageFinished(WebView p1, String url) {
 
         web.evaluateJavascript("if (window.trustedTypes && window.trustedTypes.createPolicy && !window.trustedTypes.defaultPolicy) {window.trustedTypes.createPolicy('default', {createHTML: (string) => string,createScriptURL: string => string, createScript: string => string, });}",null);
+        web.evaluateJavascript("(function(){window.YTPRO_FEATURES=Object.assign({},window.YTPRO_FEATURES||{},{pip:" + YTPRO_FEATURE_PIP + ",backgroundPlay:" + YTPRO_FEATURE_BACKGROUND_PLAY + "});})();", null);
         web.evaluateJavascript("(function () { var script = document.createElement('script'); script.src='https://youtube.com/ytpro_cdn/npm/ytpro'; document.body.appendChild(script);  })();",null);
-        web.evaluateJavascript("(function () { var script = document.createElement('script'); script.src='https://youtube.com/ytpro_cdn/npm/ytpro/bgplay.js'; document.body.appendChild(script);  })();",null);
+        if (YTPRO_FEATURE_BACKGROUND_PLAY) {
+          web.evaluateJavascript("(function () { var script = document.createElement('script'); script.src='https://youtube.com/ytpro_cdn/npm/ytpro/bgplay.js'; document.body.appendChild(script);  })();",null);
+        }
         web.evaluateJavascript("(function () { var script = document.createElement('script');script.type='module';script.src='https://youtube.com/ytpro_cdn/npm/ytpro/innertube.js'; document.body.appendChild(script);  })();",null);
 
         if (dl) {
@@ -467,6 +471,9 @@ public class MainActivity extends Activity {
     }
     @JavascriptInterface
     public void setBgPlay(boolean bgplay) {
+      if (!YTPRO_FEATURE_BACKGROUND_PLAY) {
+        bgplay = false;
+      }
       SharedPreferences prefs = getSharedPreferences("YTPRO", MODE_PRIVATE);
       prefs.edit().putBoolean("bgplay", bgplay).apply();
 
@@ -474,6 +481,9 @@ public class MainActivity extends Activity {
 
     @JavascriptInterface
     public void bgStart(String iconn, String titlen, String subtitlen, long dura) {
+      if (!YTPRO_FEATURE_BACKGROUND_PLAY) {
+        return;
+      }
       icon = iconn;
       title = titlen;
       subtitle = subtitlen;
@@ -497,6 +507,9 @@ public class MainActivity extends Activity {
 
     @JavascriptInterface
     public void bgUpdate(String iconn, String titlen, String subtitlen, long dura) {
+      if (!YTPRO_FEATURE_BACKGROUND_PLAY) {
+        return;
+      }
 
       icon = iconn;
       title = titlen;
@@ -516,6 +529,9 @@ public class MainActivity extends Activity {
     }
     @JavascriptInterface
     public void bgStop() {
+      if (!YTPRO_FEATURE_BACKGROUND_PLAY) {
+        return;
+      }
       isPlaying = false;
       mediaSession=false;
 
@@ -524,6 +540,9 @@ public class MainActivity extends Activity {
     }
     @JavascriptInterface
     public void bgPause(long ct) {
+      if (!YTPRO_FEATURE_BACKGROUND_PLAY) {
+        return;
+      }
 
        isPlaying=false;
       
@@ -539,6 +558,9 @@ public class MainActivity extends Activity {
     }
     @JavascriptInterface
     public void bgPlay(long ct) {
+      if (!YTPRO_FEATURE_BACKGROUND_PLAY) {
+        return;
+      }
  
         isPlaying=true;
       
@@ -554,6 +576,9 @@ public class MainActivity extends Activity {
     }
     @JavascriptInterface
     public void bgBuffer(long ct) {
+      if (!YTPRO_FEATURE_BACKGROUND_PLAY) {
+        return;
+      }
       
         isPlaying=true;
       
@@ -643,6 +668,9 @@ public class MainActivity extends Activity {
     }
     @JavascriptInterface
     public void pipvid(String x) {
+      if (!YTPRO_FEATURE_PIP) {
+        return;
+      }
       if (android.os.Build.VERSION.SDK_INT >= 26) {
         try {
           PictureInPictureParams params;
