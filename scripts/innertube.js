@@ -4,8 +4,6 @@ Version: 3.9.5
 URI: https://github.com/prateek-chaubey/YTPRO
 */
 
-/* Device volume / screen brightness sliders: implemented in script.js (gestureVolumeBrightness). This module only fetches streams for download — “audio” rows are file formats, not the player volume UI. */
-
 import {BG} from 'https://youtube.com/ytpro_cdn/esm/bgutils-js@3.2.0/es2022/bgutils-js.bundle.mjs';
 import "https://youtube.com/ytpro_cdn/esm/acorn@8.15.0/es2022/acorn.mjs";
 import Jinter from 'https://youtube.com/ytpro_cdn/esm/jintr@3.3.1/es2022/jintr.bundle.mjs';
@@ -203,11 +201,6 @@ return url_components.toString();
 
 window.getDownloadStreams=async ()=>{
 
-if(window.YTPRO_FEATURES && window.YTPRO_FEATURES.downloads === false){
-var _dd=document.getElementById("downytprodiv");
-if(_dd) _dd.innerHTML="Downloads are not available in this build.";
-return;
-}
 
 write("Getting Deciphers...");
 
